@@ -1,9 +1,12 @@
 package dev.redengdev;
 
 import com.hypixel.hytale.builtin.hytalegenerator.assets.density.DensityAsset;
+import com.hypixel.hytale.common.plugin.PluginIdentifier;
+import com.hypixel.hytale.common.semver.SemverRange;
 import com.hypixel.hytale.logger.HytaleLogger;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
+import com.hypixel.hytale.server.core.plugin.PluginManager;
 
 import dev.redengdev.assets.BranchingNodeAsset;
 
@@ -19,11 +22,14 @@ public class BranchingNodePlugin extends JavaPlugin {
 
     @Override
     protected void setup() {
-        //this.getCommandRegistry().registerCommand(new ExampleCommand("example", "An example command"));
-        //this.getEventRegistry().registerGlobal(PlayerReadyEvent.class, ExampleEvent::onPlayerReady);
-
         //Hook up new Density Asset
         getCodecRegistry(DensityAsset.CODEC)
-            .register("BranchingNode", BranchingNodeAsset.class, BranchingNodeAsset.CODEC);
+            .register("BranchingDensity", BranchingNodeAsset.class, BranchingNodeAsset.CODEC);
+
+        //Register Custom Nodes if Plugin Installed
+        if (PluginManager.get().hasPlugin(PluginIdentifier.fromString("Verday:Renode"), SemverRange.fromString("0.5.0"))) {
+            LOGGER.atInfo().log("Renode installed, applying to Asset Node Editor!");
+            RenodeIntegration.registerAllNodes();
+        }
     }
 }

@@ -1,4 +1,4 @@
-rootProject.name = "RedEngDev.BranchingNode-1.0"
+rootProject.name = "RedEngDev.BranchingNode-1.1.0"
 
 plugins {
     // See documentation on https://scaffoldit.dev
@@ -18,11 +18,13 @@ hytale {
 
     dependencies {
         // Any external dependency you also want to include
+        implementation("curse.maven:renode-1531866:8028565")
     }
 
     manifest {
         Group = "RedEngDev"
         Name = "BranchingNode"
         Main = "dev.redengdev.BranchingNodePlugin"
+        OptionalDependencies = mapOf(Pair("Verday:Renode", "0.5.0"))
     }
 }

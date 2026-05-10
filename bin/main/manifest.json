@@ -1,20 +1,21 @@
 {
     "Group": "RedEngDev",
     "Name": "BranchingNode",
-    "Version": "1.0.0",
-    "Description": "Description of your plugin",
+    "Version": "1.1.0",
+    "Description": "A new Density allowing connecting paths to Position Providers",
     "Authors": [
         {
             "Name": "RedEngDev",
-            "Email": "your.email@example.com",
-            "Url": "https://your-website.com"
+            "Url": "https://www.curseforge.com/members/redengdeveloper"
         }
     ],
-    "Website": "https://your-plugin-website.com",
+    "Website": "https://www.curseforge.com/hytale/mods/worldgen-branching-node",
     "DisabledByDefault": false,
     "IncludesAssetPack": false,
     "Dependencies": {},
-    "OptionalDependencies": {},
+    "OptionalDependencies": {
+        "Verday:Renode": "0.5.0"
+    },
     "ServerVersion": "2026.03.26-89796e57b",
     "Main": "dev.redengdev.BranchingNodePlugin"
 }

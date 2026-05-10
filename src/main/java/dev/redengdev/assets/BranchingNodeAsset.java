@@ -17,6 +17,7 @@ import com.hypixel.hytale.codec.KeyedCodec;
 import com.hypixel.hytale.codec.builder.BuilderCodec;
 
 import dev.redengdev.density.BranchingNodeDensity;
+import dev.redengdev.density.BranchingNodeDensity.PathType;
 
 
 public class BranchingNodeAsset extends DensityAsset {
@@ -28,9 +29,9 @@ public class BranchingNodeAsset extends DensityAsset {
     )
     .append(new KeyedCodec<>("Positions", PositionProviderAsset.CODEC, true), (asset, v) -> asset.positions = v, (asset) -> asset.positions)
     .add()
-    .append(new KeyedCodec<>("PointNoiseValues", DensityAsset.CODEC, false), (asset, v) -> asset.pointNoiseValues = v, (asset) -> asset.pointNoiseValues)
+    .append(new KeyedCodec<>("PositionNoiseValues", DensityAsset.CODEC, false), (asset, v) -> asset.pointNoiseValues = v, (asset) -> asset.pointNoiseValues)
     .add()
-    .append(new KeyedCodec<>("PathType", Codec.STRING), (asset, v) -> asset.pathType = v, (asset) -> asset.pathType)
+    .append(new KeyedCodec<>("PathType", PathType.CODEC), (asset, v) -> asset.pathType = v, (asset) -> asset.pathType)
     .add()
     .append(new KeyedCodec<>("DistanceFunction", DistanceFunctionAsset.CODEC, true), (asset, v) -> asset.distanceFunction = v, (asset) -> asset.distanceFunction)
     .add()
@@ -41,7 +42,7 @@ public class BranchingNodeAsset extends DensityAsset {
     //Node Variables
     private PositionProviderAsset positions = new ListPositionProviderAsset();
     private DensityAsset pointNoiseValues = new ConstantDensityAsset();
-    private String pathType = "All";
+    private BranchingNodeDensity.PathType pathType = PathType.ALL;
     private DistanceFunctionAsset distanceFunction = new EuclideanDistanceFunctionAsset();
     private double maxDistance = (double)10.0F;
 

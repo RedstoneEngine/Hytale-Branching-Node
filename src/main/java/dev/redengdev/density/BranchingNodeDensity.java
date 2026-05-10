@@ -12,10 +12,10 @@ import com.hypixel.hytale.builtin.hytalegenerator.density.Density;
 import com.hypixel.hytale.builtin.hytalegenerator.density.nodes.positions.distancefunctions.DistanceFunction;
 import com.hypixel.hytale.builtin.hytalegenerator.pipe.Pipe;
 import com.hypixel.hytale.builtin.hytalegenerator.positionproviders.PositionProvider;
+import com.hypixel.hytale.codec.Codec;
+import com.hypixel.hytale.codec.codecs.EnumCodec;
+import com.hypixel.hytale.codec.codecs.EnumCodec.EnumStyle;
 import com.hypixel.hytale.math.vector.Vector3d;
-
-import dev.redengdev.BranchingNodePlugin;
-
 
 public class BranchingNodeDensity extends Density {
 
@@ -47,27 +47,15 @@ public class BranchingNodeDensity extends Density {
     private double rMinValue;
     private double compareValue;
 
-    public BranchingNodeDensity(PositionProvider positions, Density pointNoiseValues, String pathType, DistanceFunction distanceFunction, double maxDistance) {
+    public BranchingNodeDensity(PositionProvider positions, Density pointNoiseValues, PathType pathType, DistanceFunction distanceFunction, double maxDistance) {
         if (maxDistance < (double)0.0F)
             throw new IllegalArgumentException("negative distance");
         //Import Variables
         this.positions = positions;
         this.pointNoiseValues = pointNoiseValues;
+        this.pathType = pathType;
         this.distanceFunction = distanceFunction;
         this.maxDistance = maxDistance;
-        switch (pathType.toLowerCase()) {
-            case "all":
-                this.pathType = PathType.ALL;
-                break;
-            case "min":
-                this.pathType = PathType.MIN;
-                break;
-            case "restrictedmin":
-                this.pathType = PathType.RESTRICTED_MIN;
-                break;
-            default:
-                throw new IllegalArgumentException("invalid path type selected");
-        }
         //Basic Variable Setup
         maxDistanceSqrd = maxDistance * maxDistance;
         this.minBounds = new Vector3d();
@@ -85,8 +73,14 @@ public class BranchingNodeDensity extends Density {
     @Override
     public double process(@Nonnull Density.Context context) {
         //Setup Variables for Processing
-        this.minBounds.assign(context.position).subtract(this.maxDistance * 2);
-        this.maxBounds.assign(context.position).add(this.maxDistance * 2);
+        if (pathType == PathType.ALL) {
+            this.minBounds.assign(context.position).subtract(this.maxDistance);
+            this.maxBounds.assign(context.position).add(this.maxDistance);
+        }
+        else {
+            this.minBounds.assign(context.position).subtract(this.maxDistance * 2);
+            this.maxBounds.assign(context.position).add(this.maxDistance * 2);
+        }
         this.minDistance = Double.MAX_VALUE;
         this.allLocalCells.clear();
         this.localCells.clear();
@@ -203,7 +197,7 @@ public class BranchingNodeDensity extends Density {
                         //(Could also do dot-product for better precision)
                         if (Math.max(cellDist, localCells.get(neighborIndex)) < cellToCellDist) {
                             //Only doing the 2D distance for now, 3D will be later...
-                            double newDistance = distanceToLine2D(context.position, allLocalCells.get(cellIndex), allLocalCells.get(neighborIndex));
+                            double newDistance = distanceToLine(context.position, allLocalCells.get(cellIndex), allLocalCells.get(neighborIndex));
                             //New Minimum based on Paths
                             if (newDistance < this.minDistance) {
                                 this.minDistance = newDistance;
@@ -217,6 +211,13 @@ public class BranchingNodeDensity extends Density {
         return Math.sqrt(this.minDistance);
     }
     
+    private double distanceToLine(Vector3d p, Vector3d p1, Vector3d p2) {
+        if (p.y == p1.y && p1.y == p2.y)
+            return distanceToLine2D(p, p1, p2);
+        else
+            return distanceToLine3D(p, p1, p2);
+    }
+
     //2D Distance Calculater of p to the line between p1 and p2 (Results is squared)
     //https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
     private double distanceToLine2D(Vector3d p, Vector3d p1, Vector3d p2) {
@@ -225,8 +226,28 @@ public class BranchingNodeDensity extends Density {
             (Math.pow(p2.z - p1.z, 2) + Math.pow(p2.x - p1.x, 2));
     }
 
+    Vector3d lineDir = new Vector3d();
+    Vector3d pointDir = new Vector3d();
+    Vector3d projectedPoint = new Vector3d();
+
+    //More resource intensive (Result is squared)
+    //Should performance test against cross product method or try other optimizations
+    private double distanceToLine3D(Vector3d p, Vector3d p1, Vector3d p2) {
+        lineDir.assign(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z).normalize(); //<- Uses sqrt
+        pointDir.assign(p.x - p1.x, p.y - p1.y, p.z - p1.z);
+        double projDist = pointDir.dot(lineDir);
+        projectedPoint.assign(p1.x + projDist * lineDir.x, p1.y + projDist * lineDir.y, p1.z + projDist * lineDir.z);
+        return projectedPoint.distanceSquaredTo(p);
+    }
+
     //Valid Pathing Values
-    private enum PathType {
-        ALL, MIN, RESTRICTED_MIN
+    public static enum PathType {
+        ALL, MIN, RESTRICTED_MIN;
+        
+        @Nonnull
+        public static final Codec<PathType> CODEC = new EnumCodec<>(PathType.class, EnumStyle.LEGACY);
+
+        private PathType() {
+        }
     }
 }
