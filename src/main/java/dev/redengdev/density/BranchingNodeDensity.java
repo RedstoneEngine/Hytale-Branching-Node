@@ -15,7 +15,7 @@ import com.hypixel.hytale.builtin.hytalegenerator.positionproviders.PositionProv
 import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.codec.codecs.EnumCodec;
 import com.hypixel.hytale.codec.codecs.EnumCodec.EnumStyle;
-import com.hypixel.hytale.math.vector.Vector3d;
+import org.joml.Vector3d;
 
 public class BranchingNodeDensity extends Density {
 
@@ -74,21 +74,21 @@ public class BranchingNodeDensity extends Density {
     public double process(@Nonnull Density.Context context) {
         //Setup Variables for Processing
         if (pathType == PathType.ALL) {
-            this.minBounds.assign(context.position).subtract(this.maxDistance);
-            this.maxBounds.assign(context.position).add(this.maxDistance);
+            this.minBounds.set(context.position).sub(this.maxDistance, this.maxDistance, this.maxDistance);
+            this.maxBounds.set(context.position).add(this.maxDistance, this.maxDistance, this.maxDistance);
         }
         else {
-            this.minBounds.assign(context.position).subtract(this.maxDistance * 2);
-            this.maxBounds.assign(context.position).add(this.maxDistance * 2);
+            this.minBounds.set(context.position).sub(this.maxDistance * 2, this.maxDistance * 2, this.maxDistance * 2);
+            this.maxBounds.set(context.position).add(this.maxDistance * 2, this.maxDistance * 2, this.maxDistance * 2);
         }
         this.minDistance = Double.MAX_VALUE;
         this.allLocalCells.clear();
         this.localCells.clear();
-        this.localPoint.assign((double)0.0F, (double)0.0F, (double)0.0F);
+        this.localPoint.set((double)0.0F, (double)0.0F, (double)0.0F);
 
         //Find all Close Points and append to List
         Pipe.One<Vector3d> positionsPipe = (providedPoint, control) -> {
-            allLocalCells.add(new Vector3d().assign(providedPoint));
+            allLocalCells.add(new Vector3d().set(providedPoint));
             this.localPoint.x = providedPoint.x - context.position.x;
             this.localPoint.y = providedPoint.y - context.position.y;
             this.localPoint.z = providedPoint.z - context.position.z;
@@ -105,8 +105,8 @@ public class BranchingNodeDensity extends Density {
 
         //Run Calculations
         PositionProvider.Context positionsContext = new PositionProvider.Context();
-        positionsContext.bounds.min.assign(this.minBounds);
-        positionsContext.bounds.max.assign(this.maxBounds);
+        positionsContext.bounds.min.set(this.minBounds);
+        positionsContext.bounds.max.set(this.maxBounds);
         positionsContext.pipe = positionsPipe;
         this.positions.generate(positionsContext);
 
@@ -118,13 +118,13 @@ public class BranchingNodeDensity extends Density {
         //Find Positions per Close Positions to create Paths Towards
         localCells.forEach((cellIndex, cellDist) -> {
             this.neighborCells.clear();
-            this.localPoint.assign((double)0.0F, (double)0.0F, (double)0.0F);
+            this.localPoint.set((double)0.0F, (double)0.0F, (double)0.0F);
 
             //Find all Close Points and append to List
             for (int i = 0; i < allLocalCells.size(); i++) {
                 if (i != cellIndex) {
-                    this.localPoint.assign(allLocalCells.get(i));
-                    this.localPoint.subtract(allLocalCells.get(cellIndex));
+                    this.localPoint.set(allLocalCells.get(i));
+                    this.localPoint.sub(allLocalCells.get(cellIndex));
                     double newDistance = this.distanceFunction.getDistance(this.localPoint);
                     if (!(this.maxDistanceSqrd < newDistance)) {
                         //Valid Close Point
@@ -233,21 +233,18 @@ public class BranchingNodeDensity extends Density {
     //More resource intensive (Result is squared)
     //Should performance test against cross product method or try other optimizations
     private double distanceToLine3D(Vector3d p, Vector3d p1, Vector3d p2) {
-        lineDir.assign(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z).normalize(); //<- Uses sqrt
-        pointDir.assign(p.x - p1.x, p.y - p1.y, p.z - p1.z);
+        lineDir.set(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z).normalize(); //<- Uses sqrt
+        pointDir.set(p.x - p1.x, p.y - p1.y, p.z - p1.z);
         double projDist = pointDir.dot(lineDir);
-        projectedPoint.assign(p1.x + projDist * lineDir.x, p1.y + projDist * lineDir.y, p1.z + projDist * lineDir.z);
-        return projectedPoint.distanceSquaredTo(p);
+        projectedPoint.set(p1.x + projDist * lineDir.x, p1.y + projDist * lineDir.y, p1.z + projDist * lineDir.z);
+        return projectedPoint.distanceSquared(p);
     }
 
     //Valid Pathing Values
-    public static enum PathType {
+    public enum PathType {
         ALL, MIN, RESTRICTED_MIN;
         
-        @Nonnull
+        public static final PathType[] VALUES = values();
         public static final Codec<PathType> CODEC = new EnumCodec<>(PathType.class, EnumStyle.LEGACY);
-
-        private PathType() {
-        }
     }
 }

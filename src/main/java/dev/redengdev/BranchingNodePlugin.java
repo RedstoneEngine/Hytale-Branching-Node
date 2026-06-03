@@ -27,7 +27,7 @@ public class BranchingNodePlugin extends JavaPlugin {
             .register("BranchingDensity", BranchingNodeAsset.class, BranchingNodeAsset.CODEC);
 
         //Register Custom Nodes if Plugin Installed
-        if (PluginManager.get().hasPlugin(PluginIdentifier.fromString("Verday:Renode"), SemverRange.fromString("0.5.0"))) {
+        if (PluginManager.get().hasPlugin(PluginIdentifier.fromString("Verday:Renode"), SemverRange.fromString(">=0.8.0"))) {
             LOGGER.atInfo().log("Renode installed, applying to Asset Node Editor!");
             RenodeIntegration.registerAllNodes();
         }
